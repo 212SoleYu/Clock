@@ -1,0 +1,160 @@
+// Date: 2025-02-18
+
+// use core::time;
+use std::time::SystemTime;
+use chrono::prelude::*;
+// use druid::platform_menus::mac::file::print;
+
+pub struct RealTime{
+    year:       u32,
+    month:      u32,
+    day:        u32,
+    hrs:        u32,
+    minute:     u32,
+    sec:        u32,
+    weekday:    u8, 
+    // action:     String, // 工作日的表示和签到/签离 尝试使用枚举类型?
+}
+
+
+
+impl RealTime {
+    pub fn new (year: u32, month: u32, day: u32, hrs: u32, minute: u32, sec: u32, weekday: u8) -> Self{
+        RealTime {
+            year,
+            month,
+            day,
+            hrs,
+            minute,
+            sec,
+            weekday,
+        }
+    }
+
+    pub fn show(&self) {
+       let s: String = format!("{:02}-{:02}-{:02} {:02}:{:02}:{:02}, {}",self.year,self.month,self.day,self.hrs,self.minute,self.sec,self.weekday);
+       println!("RealTime: {}",s);
+    }
+
+    pub fn get_real_time(&mut self) {
+        let now: SystemTime = SystemTime::now();
+        let datetime: DateTime<Local> = now.into();
+        let timestring = datetime.format("%Y-%m-%d %H:%M:%S").to_string();
+        
+        // 这里是一个必须显式的声明rust类型的地方 不然会报错
+        let parts:Vec<&str> = timestring.split(|c: char| c == ' ' || c == '-' || c == ':').collect();
+
+        let mut tmp : Result<u32,_> = parts[0].parse();
+        match  tmp {
+            Ok(tmp) => self.year = tmp,
+            Err(_) => println!("Failed to transfer time to digital!"),
+        }
+        tmp = parts[1].parse();
+        match  tmp {
+            Ok(tmp) => self.month = tmp,
+            Err(_) => println!("Failed to transfer time to digital!"),
+        }
+        tmp = parts[2].parse();
+        match  tmp {
+            Ok(tmp) => self.day = tmp,
+            Err(_) => println!("Failed to transfer time to digital!"),
+        }
+        tmp = parts[3].parse();
+        match  tmp {
+            Ok(tmp) => self.hrs = tmp,
+            Err(_) => println!("Failed to transfer time to digital!"),
+        }
+        tmp = parts[4].parse();
+        match  tmp {
+            Ok(tmp) => self.minute = tmp,
+            Err(_) => println!("Failed to transfer time to digital!"),
+        }
+        tmp = parts[5].parse();
+        match  tmp {
+            Ok(tmp) => self.sec = tmp,
+            Err(_) => println!("Failed to transfer time to digital!"),
+        }
+
+        return ();
+    }
+
+    pub fn to_naive_datetime(&self) -> NaiveDateTime {
+        NaiveDateTime::parse_from_str(
+            &format!(
+                "{:04}-{:02}-{:02} {:02}:{:02}:{:02}",
+                self.year, self.month, self.day, self.hrs, self.minute, self.sec
+            ),
+            "%Y-%m-%d %H:%M:%S",
+        )
+        .unwrap()
+    }
+
+    
+}
+
+
+
+pub struct WorkTime{
+    hrs:        u32,
+    minute:     u32,
+    sec:        u32,
+}
+
+impl WorkTime {
+    pub fn new(h:u32,m:u32,s:u32) -> Self{
+        WorkTime {hrs:h, minute:m, sec:s}
+    }
+    pub fn show(&self){ 
+        println!("WorkTime: {:02}:{:02}:{:02}",self.hrs,self.minute,self.sec);
+    }
+}
+
+pub fn time_add(earlier:WorkTime, time_length:WorkTime) -> WorkTime{
+
+    // 实现时间结构体的加法,只需要考虑到小时级别就可以, 小时以上不需要再进位
+
+    // 秒级别
+    let mut sec :u32 = earlier.sec + time_length.sec;
+    let sec_flag:u32;
+    if sec >= 60{
+        sec = sec- 60;
+        sec_flag = 1;
+    }
+    else {
+        sec_flag = 0;
+    }
+
+    // 分钟级别
+    let mut minute: u32 = earlier.minute + time_length.minute + sec_flag;
+    let  min_flag:u32;
+    if minute >= 60  {
+        minute = minute - 60;
+        min_flag = 1;
+    }
+    else {
+        min_flag = 0;
+    }
+
+    //小时级别
+    let hrs:u32 = earlier.hrs + time_length.hrs + min_flag;
+
+ 
+    WorkTime {hrs:hrs,minute:minute,sec:sec}
+}
+
+pub fn time_diff(earlier:RealTime,later:RealTime) -> WorkTime{
+
+    // 由于时间相减是比较复杂的, 设计很多种特殊情况, 因此尝试直接使用chrono库计算
+    let earlier_dt: NaiveDateTime = earlier.to_naive_datetime();
+    let later_dt: NaiveDateTime = later.to_naive_datetime();
+    let length: chrono::TimeDelta =later_dt - earlier_dt;
+
+    // println!("{}:{:02}:{:02}:{:02}",length.num_days() % 10, length.num_hours() % 24 ,length.num_minutes() % 60,length.num_seconds() % 60);
+
+    WorkTime {
+        hrs:(length.num_hours()) as u32,
+        minute:(length.num_minutes() % 60) as u32,
+        sec:(length.num_seconds() % 60) as u32,
+    }
+       
+}

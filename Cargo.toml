@@ -4,3 +4,6 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+fltk = { version = "1.4", features = ["fltk-bundled"] }
+druid = "0.8.0"  # 添加 druid 依赖项
+chrono = "0.4"   # 添加 chrono 依赖项
