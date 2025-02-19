@@ -1,10 +1,12 @@
 // Date: 2025-02-18
 
 // use core::time;
-use std::time::SystemTime;
+use std::{fmt::format, time::SystemTime};
 use chrono::prelude::*;
+use druid::{Data, Lens};
 // use druid::platform_menus::mac::file::print;
 
+#[derive(Debug,Lens,Clone)]
 pub struct RealTime{
     year:       u32,
     month:      u32,
@@ -12,14 +14,14 @@ pub struct RealTime{
     hrs:        u32,
     minute:     u32,
     sec:        u32,
-    weekday:    u8, 
+    weekday:    Weekday, 
     // action:     String, // 工作日的表示和签到/签离 尝试使用枚举类型?
 }
 
 
 
 impl RealTime {
-    pub fn new (year: u32, month: u32, day: u32, hrs: u32, minute: u32, sec: u32, weekday: u8) -> Self{
+    pub fn new (year: u32, month: u32, day: u32, hrs: u32, minute: u32, sec: u32, weekday: Weekday) -> Self{
         RealTime {
             year,
             month,
@@ -31,8 +33,32 @@ impl RealTime {
         }
     }
 
+    pub fn lazy_new() -> Self {
+        let weekday:Weekday = Weekday::Mon;
+        RealTime{
+            year:0,
+            month: 0,
+            day:0,
+            hrs:0,
+            minute:0,
+            sec:0,
+            weekday: weekday
+        }
+    }
+
+    pub fn copy_from(&mut self,item:&RealTime) {
+        self.year = item.year;
+        self.month = item.month;
+        self.day = item.day;
+        self.hrs = item.hrs;
+        self.minute = item.minute;
+        self.sec = item.sec;
+        self.weekday  = item.weekday;
+
+    }
     pub fn show(&self) {
-       let s: String = format!("{:02}-{:02}-{:02} {:02}:{:02}:{:02}, {}",self.year,self.month,self.day,self.hrs,self.minute,self.sec,self.weekday);
+    //    let s: String = format!("{:02}-{:02}-{:02} {:02}:{:02}:{:02}, {}",self.year,self.month,self.day,self.hrs,self.minute,self.sec,self.weekday);
+       let s: String = self.get_string_time();
        println!("RealTime: {}",s);
     }
 
@@ -89,13 +115,22 @@ impl RealTime {
         .unwrap()
     }
 
+    // 将真实时间整理成字符串方便读写操作
+    pub fn get_string_time(&self)->String{
+        format!("{:04}-{:02}-{:02} {:02}:{:02}:{:02}, {:?}",
+            self.year, self.month, self.day, self.hrs, self.minute, self.sec, self.weekday
+        )
+    }
+
     
 }
 
 
 
+// 累计工作的时间 不需要天以上的单位 也不需要周几
+#[derive(Clone,Data,Lens)]
 pub struct WorkTime{
-    hrs:        u32,
+    pub hrs:        u32,
     minute:     u32,
     sec:        u32,
 }
@@ -104,8 +139,16 @@ impl WorkTime {
     pub fn new(h:u32,m:u32,s:u32) -> Self{
         WorkTime {hrs:h, minute:m, sec:s}
     }
+    pub fn lazy_new()->Self{
+        WorkTime{hrs:0,minute:0,sec:0}
+    }
     pub fn show(&self){ 
         println!("WorkTime: {:02}:{:02}:{:02}",self.hrs,self.minute,self.sec);
+    }
+    pub fn get_string_time(&self)->String{
+        format!("{:02}:{:02}:{:02}",
+             self.hrs, self.minute, self.sec
+        )
     }
 }
 
@@ -142,7 +185,7 @@ pub fn time_add(earlier:WorkTime, time_length:WorkTime) -> WorkTime{
     WorkTime {hrs:hrs,minute:minute,sec:sec}
 }
 
-pub fn time_diff(earlier:RealTime,later:RealTime) -> WorkTime{
+pub fn time_diff(earlier:&RealTime,later:&RealTime) -> WorkTime{
 
     // 由于时间相减是比较复杂的, 设计很多种特殊情况, 因此尝试直接使用chrono库计算
     let earlier_dt: NaiveDateTime = earlier.to_naive_datetime();
