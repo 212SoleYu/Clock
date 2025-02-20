@@ -56,6 +56,14 @@ impl RealTime {
         self.weekday  = item.weekday;
 
     }
+
+    // 将真实时间整理成字符串方便读写操作
+    pub fn get_string_time(&self)->String{
+        format!("{:04}-{:02}-{:02} {:02}:{:02}:{:02}, {:?}",
+            self.year, self.month, self.day, self.hrs, self.minute, self.sec, self.weekday
+        )
+    }
+    
     pub fn show(&self) {
     //    let s: String = format!("{:02}-{:02}-{:02} {:02}:{:02}:{:02}, {}",self.year,self.month,self.day,self.hrs,self.minute,self.sec,self.weekday);
        let s: String = self.get_string_time();
@@ -115,12 +123,7 @@ impl RealTime {
         .unwrap()
     }
 
-    // 将真实时间整理成字符串方便读写操作
-    pub fn get_string_time(&self)->String{
-        format!("{:04}-{:02}-{:02} {:02}:{:02}:{:02}, {:?}",
-            self.year, self.month, self.day, self.hrs, self.minute, self.sec, self.weekday
-        )
-    }
+    
 
     
 }
@@ -152,7 +155,7 @@ impl WorkTime {
     }
 }
 
-pub fn time_add(earlier:WorkTime, time_length:WorkTime) -> WorkTime{
+pub fn time_add(earlier:&WorkTime, time_length:&WorkTime) -> WorkTime{
 
     // 实现时间结构体的加法,只需要考虑到小时级别就可以, 小时以上不需要再进位
 

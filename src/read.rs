@@ -17,15 +17,15 @@ use crate::time::RealTime;
 // 初步设计日志条目格式为: YY-MM-DD hh:mm:ss action
 // 表示到岗和离岗的action可以用简单的u8 或者用枚举类型
 // 可能需要建立一个专门的日志条目结构体, 包含一个RealTime 和一个表示日志内容的action
-#[derive(Debug,PartialEq)]
+#[derive(Debug,PartialEq,Clone)]
 pub enum WorkStatus{
     OnDuty,
     OffDuty,
 }
 
-
+#[derive(Debug,Clone)]
 pub struct LogNode {
-    time :      RealTime,
+    pub time :      RealTime,
     action :    WorkStatus
 }
 
@@ -118,11 +118,13 @@ pub fn log_write(lognode:&LogNode, logfile:String) -> io::Result<()>{
 // 读文件的功能应该是读一整个文件
 // 如果只是读取文件的话应该返回日志记录的数组
 // 将所有的内容全部读出来 然后按行划分 组成一个数组
-pub fn log_read(logfile:String) -> io::Result<Vec<LogNode>>{
+pub fn log_read(logfile:&String) -> io::Result<Vec<LogNode>>{
 
     let mut vec:Vec<LogNode> = Vec::new();
     let file: File = OpenOptions::new()
+    .create(true)
     .read(true)
+    .write(true)
     .open(logfile)?;
 
     let reader: BufReader<File> = BufReader::new(file);

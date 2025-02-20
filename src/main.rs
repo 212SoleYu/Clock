@@ -5,23 +5,28 @@ mod read;
 mod time;
 mod actions;
 
+use actions::left_button_click;
+use actions::right_button_click;
 use druid::widget::{Button, Flex, Label};
 use druid::{AppLauncher, Data, Env, Lens, Widget, WidgetExt, WindowDesc, EventCtx, LifeCycle, LifeCycleCtx, UpdateCtx, Event, Selector, Command};
 use read::{log_write, LogNode, WorkStatus};
 use time::{time_add, time_diff, RealTime, WorkTime};
 use std::ascii::AsciiExt;
+use std::fs::{File, OpenOptions,};
+use std::io;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use chrono::prelude::*;
 
 const UPDATE_TIME: Selector = Selector::new("update_time");
 #[derive(Clone,Data, Lens)]
 struct AppState {
-    button1_clicks: u32,
-    button2_clicks: u32,
-    current_time:   String,
-    status:         bool,
+    button1_clicks:     u32,
+    button2_clicks:     u32,
+    current_time:       String,
+    status:             bool,
     // total_time:     String,
-    total_time:     WorkTime,
+    total_time:         WorkTime,
+    current_filename:   String,
 
 }
 
@@ -51,24 +56,33 @@ fn build_ui() -> impl Widget<AppState> {
     row.add_child(Button::new("Come").on_click(|_ctx: &mut druid::EventCtx<'_, '_>, data: &mut AppState, _env| {
         data.button1_clicks += 1;
         // data.current_time = get_current_time();
-        data.status = data.status ^ true;
+        match left_button_click(data) {
+            Ok(())=>{}
+            Err(e)=>{eprintln!("Button failed: {}",e)}
+        }
         
     }));
     row.add_child(Button::new("Leave").on_click(|_ctx, data: &mut AppState, _env| {
         data.button2_clicks += 1;
+        match right_button_click(data){
+            Ok( ())=>{}
+            Err(e)=>{eprintln!("Button failed: {}",e)}
+        }
     }));
     col.add_child(row);
 
     col
 }
 
-fn main() {
+fn main() ->io::Result<()>{
 
+    // 获取app初始状态
+    let mut app_data: AppState = AppState::app_init();
+    // item.show();
 
-
-    // let main_window: WindowDesc<AppState> = WindowDesc::new(build_ui())
-    //     .window_size((600.0, 400.0))
-    //     .title("My Clock App");
+    let main_window: WindowDesc<AppState> = WindowDesc::new(build_ui())
+        .window_size((600.0, 400.0))
+        .title("My Clock App v0.1");
     // let initial_data = AppState {
     //     button1_clicks: 0,
     //     button2_clicks: 0,
@@ -79,12 +93,12 @@ fn main() {
     //     total_time: WorkTime::lazy_new(),
     // };
 
-    // let launcher = AppLauncher::with_window(main_window);
-    // let event_sink = launcher.get_external_handle();
-    // launcher
-    //     // .delegate(AppState)
-    //     .launch(initial_data)
-    //     .expect("Failed to launch application");
+    let launcher = AppLauncher::with_window(main_window);
+    let event_sink = launcher.get_external_handle();
+    launcher
+        // .delegate(AppState)
+        .launch(app_data)
+        .expect("Failed to launch application");
 
 
     // let mut time1: WorkTime = WorkTime::new(1,20,0);
@@ -133,8 +147,20 @@ fn main() {
 
     
 
-    AppState::app_init();
- 
+
+//     match OpenOptions::new()
+//     .create(true)
+//     .read(true)
+//     .write(true)
+//     .open("0000.txt") {
+//     Ok(item) => {
+//         println!("File opened or created successfully.");
+//     },
+//     Err(e) => {
+//         eprintln!("Error occurred: {}", e);
+//     },
+// }
+    todo!();
 
 }
 
