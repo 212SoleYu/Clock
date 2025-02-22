@@ -109,6 +109,8 @@ impl RealTime {
             Err(_) => println!("Failed to transfer time to digital!"),
         }
 
+        // 更新周数
+        self.weekday = datetime.weekday();
         return ();
     }
 
@@ -122,13 +124,7 @@ impl RealTime {
         )
         .unwrap()
     }
-
-    
-
-    
 }
-
-
 
 // 累计工作的时间 不需要天以上的单位 也不需要周几
 #[derive(Clone,Data,Lens)]

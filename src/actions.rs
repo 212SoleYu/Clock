@@ -4,8 +4,10 @@
 
 
 use std::fmt::format;
+use std::fs;
 use std::io::Error;
 use std::num::ParseIntError;
+use std::path::Path;
 
 use crate::app_state_derived_lenses::current_time;
 use crate::app_state_derived_lenses::total_time;
@@ -56,8 +58,6 @@ const BASE_WEEKDAY:Weekday = Weekday::Mon;
 impl AppState{
     pub fn lazy_new()->Self{
         AppState{
-            button1_clicks: 0,
-            button2_clicks: 0,
             current_time:   "0".to_string(),
             status:         false,
             total_time:     WorkTime::lazy_new(),
@@ -70,6 +70,17 @@ impl AppState{
         println!("Current total_time: {}",self.total_time.get_string_time());
     }
     pub fn app_init()->Self{
+        // 更新内容: 需要首先创建一个存放日志的目录log/, 与clock存放在同一目录下, 
+        let path = "log";
+        if !Path::new(path).exists()   {
+            fs::create_dir(path);
+            println!("Directory has been created now");
+        }
+        else{
+            println!("Directory has already been created before")
+        }
+
+
         // 获取时间,当前时间减去一个基准时间来获知当前是第几周
         let mut current_time_now:RealTime = RealTime::lazy_new();
         current_time_now.get_real_time();
@@ -81,7 +92,7 @@ impl AppState{
         let weeknum :u32= (days_diff.hrs)/(24 * 7);
         
         // weeknum就是当前的周数,filename是文件的名字
-        let filename :String = format!("{:04}.txt",weeknum);
+        let filename :String = format!("{}/{:04}.txt",path,weeknum);
 
         // println!("{}",filename);
 
@@ -124,7 +135,7 @@ impl AppState{
             Err(e)=>eprintln!("Error in creating or reading file!"),
         }
         // todo!();
-        AppState { button1_clicks: 0, button2_clicks: 0, current_time: current_time_now.get_string_time(), 
+        AppState { current_time: current_time_now.get_string_time(), 
             status: status, total_time: total_time_now ,current_filename:filename}
     }
 }
