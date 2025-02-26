@@ -23,7 +23,7 @@ use crate::time::time_diff;
 use crate::time::RealTime;
 use crate::time::WorkTime;
 use crate::AppState;
-use crate::MyTimerToken;
+// use crate::MyTimerToken;
 use chrono::format::Item;
 use chrono::DateTime;
 use chrono::Datelike;
@@ -64,7 +64,7 @@ impl AppState{
             status:         false,
             total_time:     WorkTime::lazy_new(),
             current_filename:"noname.txt".to_string(),
-            timer_id:       MyTimerToken::new(),
+            // timer_id:       MyTimerToken::new(),
         }
     }
     pub fn show(&self){
@@ -139,7 +139,9 @@ impl AppState{
         }
         // todo!();
         AppState { current_time: current_time_now.get_string_time(), 
-            status: status, total_time: total_time_now ,current_filename:filename,timer_id:MyTimerToken::new()}
+            status: status, total_time: total_time_now ,current_filename:filename,
+            // timer_id:MyTimerToken::new()
+        }
     }
 }
 
