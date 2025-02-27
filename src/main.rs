@@ -2,7 +2,7 @@
 // Description: This is my clock program. 
 
 // 在windows环境下执行app 不显示终端
-// #![windows_subsystem = "windows"]cargo run
+#![windows_subsystem = "windows"]
 
 
 mod read;
@@ -17,14 +17,14 @@ use druid::TimerToken;
 //     widget::{ControllerHost}
 // };
 use druid::{AppLauncher, Data, Env, Lens, Widget, WidgetExt, WindowDesc, 
-    EventCtx, LifeCycle, LifeCycleCtx, UpdateCtx, Event, Selector, Command};
-use read::{log_write, LogNode, WorkStatus};
+    EventCtx, Event, Selector};
+// use read::{log_write, LogNode, WorkStatus};
 use time::{time_add, time_diff, RealTime, WorkTime};
-use std::fs::{File, OpenOptions,};
+// use std::fs::{File, OpenOptions,};
 use std::io;
-use std::time::{Duration, SystemTime, UNIX_EPOCH};
-use chrono::prelude::*;
-use druid::widget::Controller;
+// use std::time::{Duration, SystemTime, UNIX_EPOCH};
+// use chrono::prelude::*;
+// use druid::widget::Controller;
 
 
 #[derive(Clone, Data, Lens)]
@@ -34,7 +34,8 @@ struct AppState {
     total_time:         WorkTime,
     current_filename:   String,
 
-    // timer_id:           MyTimerToken,
+    last_total_time:    WorkTime,
+    last_time_stamp:    String
 
 }
 
@@ -48,7 +49,6 @@ impl TimerController{
     }
 }
 
-const TICK: Selector<()> =Selector::new("tick");
 
 impl<W:Widget<AppState>> druid::widget::Controller<AppState,W> for TimerController{
     fn event(&mut self, child: &mut W, ctx: &mut EventCtx, event: &Event, data: &mut AppState, env: &Env) {
@@ -69,11 +69,14 @@ impl<W:Widget<AppState>> druid::widget::Controller<AppState,W> for TimerControll
                 // 但是累计时间的计算方式并不能照搬
                 // 因为当前计算累计工作时间的方式是在leave的时候重读整个文档, 捉对相减来计算获得.
                 // 如果想要获得累计的动态工作时间, 就必须将之前的累计时间和这次正在累计的时间分开
-                // 
-
-
-
-
+                // 首先要判断当前的工作状态, 如果当前是离岗, 那么什么都不要做
+                // 如果当前是在岗状态, 那么需要将当前的时间和最后的工作时间做差 将这个累计时间不停的计算
+                if data.status == true{
+                    let mut last:RealTime =RealTime::lazy_new();
+                    last.create_from_string(&data.last_time_stamp);
+                    let mut worktime_diff = time_diff(&last, &time_now);
+                    data.total_time = time_add(&data.last_total_time, &worktime_diff);
+                }
 
                 // 重置计时器
                 let new_token = ctx.request_timer(std::time::Duration::from_secs(1));
@@ -138,7 +141,7 @@ fn build_ui() -> impl Widget<AppState> {
 fn main() ->io::Result<()>{
 
     // 获取app初始状态
-    let mut app_data: AppState = AppState::app_init();
+    let app_data: AppState = AppState::app_init();
     // item.show();
 
     let main_window: WindowDesc<AppState> = 
@@ -152,15 +155,7 @@ fn main() ->io::Result<()>{
         .launch(app_data)
         .expect("Failed to launch application");
 
-
     todo!();
 
 }
-
-
-// fn get_current_time() -> String {
-//     let now = SystemTime::now();
-//     let datetime: chrono::DateTime<chrono::Local> = now.into();
-//     datetime.format("%Y-%m-%d %H:%M:%S").to_string()
-// }
 

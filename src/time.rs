@@ -2,7 +2,7 @@
 
 // use core::time;
 use std::{fmt::format, time::SystemTime};
-use chrono::prelude::*;
+use chrono::{prelude::*, ParseWeekdayError};
 use druid::{Data, Lens};
 // use druid::platform_menus::mac::file::print;
 
@@ -64,6 +64,57 @@ impl RealTime {
         )
     }
     
+    // 从一个字符串中创建RealTime类型
+    pub fn create_from_string(&mut self, timestring:&String){
+        let parts:Vec<&str> = timestring.split(|c: char| c == ' ' || c == '-' || c == ':' || c == ',').filter(|&x|!x.is_empty()).collect();
+
+        let mut tmp : Result<u32,_> = parts[0].parse();
+        match  tmp {
+            Ok(tmp) => self.year = tmp,
+            Err(_) => println!("Failed to transfer time to digital!"),
+        }
+        tmp = parts[1].parse();
+        match  tmp {
+            Ok(tmp) => self.month = tmp,
+            Err(_) => println!("Failed to transfer time to digital!"),
+        }
+        tmp = parts[2].parse();
+        match  tmp {
+            Ok(tmp) => self.day = tmp,
+            Err(_) => println!("Failed to transfer time to digital!"),
+        }
+        tmp = parts[3].parse();
+        match  tmp {
+            Ok(tmp) => self.hrs = tmp,
+            Err(_) => println!("Failed to transfer time to digital!"),
+        }
+        tmp = parts[4].parse();
+        match  tmp {
+            Ok(tmp) => self.minute = tmp,
+            Err(_) => println!("Failed to transfer time to digital!"),
+        }
+        tmp = parts[5].parse();
+        match  tmp {
+            Ok(tmp) => self.sec = tmp,
+            Err(_) => println!("Failed to transfer time to digital!"),
+        }
+
+        // let tmp:Weekday = parts[6].parse().unwrap();
+        let tmp = parts[6];
+        match tmp {
+            "Mon" => self.weekday = Weekday::Mon,
+            "Tue" | "Tuesday" => self.weekday = Weekday::Tue,
+            "Wed" | "Wednesday" =>self.weekday = Weekday::Wed,
+            "Thu" | "Thursday" => self.weekday = Weekday::Thu,
+            "Fri" | "Friday" => self.weekday = Weekday::Fri,
+            "Sat" | "Saturday" => self.weekday = Weekday::Sat,
+            "Sun" | "Sunday" => self.weekday = Weekday::Sun,
+            _ => {}
+        }
+       return ();
+    }
+
+
     pub fn show(&self) {
     //    let s: String = format!("{:02}-{:02}-{:02} {:02}:{:02}:{:02}, {}",self.year,self.month,self.day,self.hrs,self.minute,self.sec,self.weekday);
        let s: String = self.get_string_time();
@@ -76,7 +127,7 @@ impl RealTime {
         let timestring = datetime.format("%Y-%m-%d %H:%M:%S").to_string();
         
         // 这里是一个必须显式的声明rust类型的地方 不然会报错
-        let parts:Vec<&str> = timestring.split(|c: char| c == ' ' || c == '-' || c == ':').collect();
+        let parts:Vec<&str> = timestring.split(|c: char| c == ' ' || c == '-' || c == ':' ).collect();
 
         let mut tmp : Result<u32,_> = parts[0].parse();
         match  tmp {

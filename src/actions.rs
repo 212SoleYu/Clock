@@ -3,34 +3,28 @@
 // 左右键触发的时候的基本逻辑和对读写操作的调用
 
 
-use std::fmt::format;
+// use std::fmt::format;
 use std::fs;
 use std::io::Error;
-use std::num::ParseIntError;
 use std::path::Path;
 
-use crate::app_state_derived_lenses::current_time;
-use crate::app_state_derived_lenses::total_time;
+// use crate::app_state_derived_lenses::current_time;
+// use crate::app_state_derived_lenses::last_time_stamp;
+// use crate::app_state_derived_lenses::last_total_time;
+// use crate::app_state_derived_lenses::total_time;
 use crate::read::log_read;
 use crate::read::log_write;
 use crate::read::LogNode;
 use crate::read::WorkStatus;
-use crate::time;
-use crate::read;
-use crate::time::real_time_derived_lenses::year;
+// use crate::time;
+// use crate::read;
+// use crate::time::real_time_derived_lenses::year;
 use crate::time::time_add;
 use crate::time::time_diff;
 use crate::time::RealTime;
 use crate::time::WorkTime;
 use crate::AppState;
-// use crate::MyTimerToken;
-use chrono::format::Item;
-use chrono::DateTime;
-use chrono::Datelike;
-use chrono::Local;
 use chrono::Weekday;
-use druid::platform_menus::mac::file;
-use druid::TimerToken;
 
 
 
@@ -46,7 +40,6 @@ const BASE_WEEKDAY:Weekday = Weekday::Mon;
 
 
 
-// 要完成左键逻辑和右键逻辑,还有一个启动检查逻辑
 
 // 启动逻辑:
 // 1. 获取当前的时间,并且分清楚当前时间的周数 已完成
@@ -60,11 +53,13 @@ const BASE_WEEKDAY:Weekday = Weekday::Mon;
 impl AppState{
     pub fn lazy_new()->Self{
         AppState{
-            current_time:   "0".to_string(),
-            status:         false,
-            total_time:     WorkTime::lazy_new(),
-            current_filename:"noname.txt".to_string(),
-            // timer_id:       MyTimerToken::new(),
+            current_time:       "0".to_string(),
+            status:             false,
+            total_time:         WorkTime::lazy_new(),
+            current_filename:   "noname.txt".to_string(),
+            last_total_time:    WorkTime::lazy_new(),
+            last_time_stamp:    "0".to_string(),
+
         }
     }
     pub fn show(&self){
@@ -76,7 +71,7 @@ impl AppState{
         // 更新内容: 需要首先创建一个存放日志的目录log/, 与clock存放在同一目录下, 
         let path = "log";
         if !Path::new(path).exists()   {
-            fs::create_dir(path);
+            let _ = fs::create_dir(path);
             println!("Directory has been created now");
         }
         else{
@@ -97,13 +92,18 @@ impl AppState{
         // weeknum就是当前的周数,filename是文件的名字
         let filename :String = format!("{}/{:04}.txt",path,weeknum);
 
+
         // println!("{}",filename);
 
         // 生成了文件名后再进行文件创建,直接将这个逻辑放在log_read中
         // 如果是新的一周那么生成新文件读一个空vec返回
         // 如果不是新的一周那么进一步操作vec来获取知识
         let mut status:bool = false;
-        let mut total_time_now:WorkTime =WorkTime::lazy_new();
+
+        // 两个累计时间都先初始化为0
+        let mut total_time_now:WorkTime = WorkTime::lazy_new();
+        let mut last_total_time_now:WorkTime = WorkTime::lazy_new();
+        let mut last_time_stamp_now:String  = "0".to_string();
         match log_read(&filename){
             Ok(vec)=>{
                 println!("Successfully read operation.");
@@ -118,29 +118,48 @@ impl AppState{
                     if size % 2 == 1
                     {
                         // 奇数,说明当前是在岗的
+                        // 将当前的状态设置为在岗
                         status = true;
+                        // 捉对算当前的累计时间
+                        let mut i = 0;
                         for i in (0..size-1).step_by(2){
                             let tmp :WorkTime = time_diff(&vec[i].time, &vec[i+1].time);
-                            total_time_now = time_add(&total_time_now, &tmp);
+                            last_total_time_now = time_add(&last_total_time_now, &tmp);
                         }
+                        // 此前累计的工作时间存在last_total_time_now里
+                        // 最老的时间戳存在last_time_stamp_now里
+                        last_time_stamp_now = vec[size-1].time.get_string_time();
+
+                        // 在岗的时候, 需要将WorkTime手动计算出来
+                        total_time_now = time_add(&last_total_time_now, &time_diff(&vec[size -1].time, &current_time_now))
+
                     }
-                    else if size % 2 == 0{
+                    else if (size % 2 == 0) && (size > 0){
                         // 偶数 说明当前离岗
                         status = false;
-                        
+                        let mut i = 0;
                         for i in (0..size).step_by(2){
                             let tmp :WorkTime = time_diff(&vec[i].time, &vec[i+1].time);
-                            total_time_now = time_add(&total_time_now, &tmp);
+                            last_total_time_now = time_add(&last_total_time_now, &tmp);
                         }
+                        // 离岗的情况下, 此前工作时间和当前工作时间是一样的内容
+                        total_time_now = last_total_time_now.clone();
+                        last_time_stamp_now = vec[size-1].time.get_string_time(); 
                     }
                 }
             },
             Err(e)=>eprintln!("Error in creating or reading file!"),
         }
         // todo!();
-        AppState { current_time: current_time_now.get_string_time(), 
-            status: status, total_time: total_time_now ,current_filename:filename,
-            // timer_id:MyTimerToken::new()
+
+
+        AppState { 
+            current_time: current_time_now.get_string_time(), 
+            status: status, 
+            total_time: total_time_now ,
+            current_filename:filename,
+            last_total_time:last_total_time_now,
+            last_time_stamp:last_time_stamp_now
         }
     }
 }
@@ -150,13 +169,13 @@ impl AppState{
 // 左键逻辑:首先检查当前状态, 如果是工作状态则停止 如果是非工作状态则:
 // 1. 修改工作状态至在岗
 // 2. 向文本中写入工作记录
-// 3. 工作时间开始累计(可选)
+// 3. 工作时间开始累计,将最老的签到记录设置为当前时间, 最老的累计时间不变
 pub fn left_button_click(app_state:&mut AppState)->Result<(),Error>{
     let current_state = app_state.status;
     if current_state == true {
         return Ok(());
     }
-    app_state.status = true;
+    // app_state.status = true;
     // 生成一条日志node 然后写入
     let mut current_real_time = RealTime::lazy_new();
     current_real_time.get_real_time();
@@ -169,8 +188,11 @@ pub fn left_button_click(app_state:&mut AppState)->Result<(),Error>{
         },
         Err(e)=>{eprintln!("Failed in parse: {}",e)},
     }
-    // log_write(&lognode, app_state.current_filename.clone())?;
-    // // todo!()
+
+    // 将此前最老是时间戳设置为当下
+    app_state.last_time_stamp = current_real_time.get_string_time();
+    // 最后再修改status
+    app_state.status = true;
     Ok(())
 }
 
@@ -179,7 +201,7 @@ pub fn left_button_click(app_state:&mut AppState)->Result<(),Error>{
 // 右键逻辑: 首先检查当前状态,如果是离岗状态则停止,如果是在岗状态则:
 // 1. 修改工作状态至离岗
 // 2. 向文本中写入离岗记录
-// 3. 计算累计时间,更新当前累计时间
+// 3. 计算累计时间,更新当前累计时间, 将最老累计时间更新至当前时间, 最老时间戳不变
 pub fn right_button_click(app_state:&mut AppState)->Result<(),Error>{
 
     let current_state:bool = app_state.status;
@@ -187,42 +209,25 @@ pub fn right_button_click(app_state:&mut AppState)->Result<(),Error>{
         return Ok(());
     }
 
-    app_state.status = false;
+    
     let mut current_real_time = RealTime::lazy_new();
     current_real_time.get_real_time();
     let new_status:WorkStatus = WorkStatus::OffDuty;
     let time_string :String = format!("{}, {:?}",current_real_time.get_string_time(),new_status);
 
-    match LogNode::new_from_string(&time_string) {
-        Ok(lognode) =>{
-            // 先读一下把最后一个元素读出来
-            // let mut last_node:Option<LogNode> = None;
-            let mut last_node:LogNode = LogNode::lazy_new();
-            match log_read(&app_state.current_filename.clone()) {
-                Ok(list)=>{
-                    // if let Some(item) = list.last(){
-                    //     last_node = Some(item.clone());
-                    // }
-                    match list.last() {
-                        Some(item)=>{last_node = item.clone()},
-                        None=>{}
-                        
-                    }
-                },
-
-                Err(e)=>{eprintln!("Error occured: {}",e)},
-            }
-            let time_diff_new:WorkTime = time_diff(&last_node.time, &lognode.time);
-            log_write(&lognode, app_state.current_filename.clone());
-
-            // 更新累计工作时间
-            app_state.total_time = time_add(&app_state.total_time, &time_diff_new);
-        },        
-        Err(e)=>{eprintln!("Failed in parse: {}",e)},
+    // 由于AppState中已经存储了最后一次工作的时间, 所以在右键时不需要再进行读文件
+    match LogNode::new_from_string(&time_string){
+        Ok(lognode)=>{
+            let _ = log_write(&lognode, app_state.current_filename.clone());
+        }
+        Err(e) => {eprintln!("Failed in parse: {}",e)},
     }
 
 
 
+    app_state.last_total_time = app_state.total_time.clone();
+    // 最后再设置状态
+    app_state.status = false;
     // todo!()
     Ok(())
 }

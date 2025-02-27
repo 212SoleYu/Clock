@@ -6,10 +6,10 @@ use std::fs::{File, OpenOptions};
 use std::io::{self, Write, BufRead, BufReader};
 use std::str::FromStr;
 use std::num::ParseIntError;
-use chrono::format::Item;
-use chrono::{ParseError, Weekday};
-use druid::platform_menus::mac::file::print;
-use druid::platform_menus::win::file::new;
+// use chrono::format::Item;
+use chrono::Weekday;
+// use druid::platform_menus::mac::file::print;
+// use druid::platform_menus::win::file::new;
 
 use crate::time::RealTime;
 
@@ -91,10 +91,6 @@ impl LogNode{
 }
 
 
-pub fn get_current_path() {
-    let path = std::env::current_dir().unwrap();
-    println!("The current directory is {}", path.display());
-}
 
 // 一个读文件操作 一个写文件操作 都可以写成独立的函数 
 
