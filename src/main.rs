@@ -16,7 +16,7 @@ use druid::TimerToken;
 // use druid::{
 //     widget::{ControllerHost}
 // };
-use druid::{AppLauncher, Data, Env, Lens, Widget, WidgetExt, WindowDesc, 
+use druid::{AppLauncher, Data, Env, Lens, Widget, WidgetExt, WindowDesc, Color,
     EventCtx, Event, Selector};
 // use read::{log_write, LogNode, WorkStatus};
 use time::{time_add, time_diff, RealTime, WorkTime};
@@ -97,6 +97,7 @@ fn build_ui() -> impl Widget<AppState> {
     realtime_row.add_child(Label::dynamic(|data: &AppState, _env| data.current_time.clone()).controller(TimerController::new()));
     
     col.add_child(realtime_row);
+ 
 
     let mut dict:Vec<String> = Vec::new();
     dict.push("OffDuty".to_string());
@@ -146,12 +147,16 @@ fn main() ->io::Result<()>{
 
     let main_window: WindowDesc<AppState> = 
         WindowDesc::new(build_ui())
+        // .with_window_icon()
         .window_size((600.0, 400.0))
+        
         .title("My Clock App v0.3");
 
     let launcher = AppLauncher::with_window(main_window);
     launcher
-        
+        .configure_env(|env,_|{
+            env.set(druid::theme::BACKGROUND_DARK, Color::rgb8(0,0,0))
+        })
         .launch(app_data)
         .expect("Failed to launch application");
 

@@ -2,3 +2,7 @@ target/
 *txt
 log/
 .vscode/
+picture/
+build.rs
+icon.rc
+*.ico

@@ -74,13 +74,6 @@ impl LogNode{
     }
 
     pub fn show(&self)->(){
-        // self.time.show();
-        // if  self.action == WorkStatus::OnDuty{
-        //     println!("Action");
-        // }
-        // else {
-        //     println!("OffWork");
-        // }
         let s: String = self.get_string_log();
         println!("{}",self.get_string_log());
     }
@@ -138,11 +131,6 @@ pub fn log_read(logfile:&String) -> io::Result<Vec<LogNode>>{
             Err(e)=>eprintln!("Error reading line: {}",e),
         }
     }
-
-    // 验证
-    // for item in &vec {
-    //     item.show();
-    // } 
 
     Ok(vec)
 
