@@ -3,6 +3,5 @@ target/
 log/
 .vscode/
 picture/
-build.rs
-icon.rc
-*.ico
+
+
