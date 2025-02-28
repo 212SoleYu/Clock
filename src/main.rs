@@ -148,7 +148,7 @@ fn main() ->io::Result<()>{
     let main_window: WindowDesc<AppState> = 
         WindowDesc::new(build_ui())
         // .with_window_icon()
-        .window_size((600.0, 400.0))
+        .window_size((320.0, 130.0))
         
         .title("My Clock App v0.3");
 
