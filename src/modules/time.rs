@@ -8,9 +8,9 @@ use druid::{Data, Lens};
 
 #[derive(Debug,Lens,Clone)]
 pub struct RealTime{
-    year:       u32,
-    month:      u32,
-    day:        u32,
+    pub year:       u32,
+    pub month:      u32,
+    pub day:        u32,
     hrs:        u32,
     minute:     u32,
     sec:        u32,
@@ -181,8 +181,8 @@ impl RealTime {
 #[derive(Clone,Data,Lens)]
 pub struct WorkTime{
     pub hrs:        u32,
-    minute:     u32,
-    sec:        u32,
+    pub minute:     u32,
+    pub sec:        u32,
 }
 
 impl WorkTime {

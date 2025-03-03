@@ -1,10 +1,15 @@
-// use modules::time::WorkTime;
-// mod modules;
+// use std::collections::btree_map::Entry;
+// use std::fs;
+use std::path::Path;
+use walkdir::{WalkDir, DirEntry};
+use crate::modules::history::*;
 use crate::modules::time::*;
 use crate::modules::actions::*;
+use crate::modules::history::*;
 use druid::{ Data, Env, Lens, Widget, WidgetExt, WindowDesc, TimerToken, 
     EventCtx, Event, };
 use druid::widget::{Flex,Label,Button};
+// use fltk::widget::Widget;
 
 
 
@@ -116,8 +121,8 @@ pub fn build_ui() -> impl Widget<AppState> {
     }));
     // 新增一个打开新窗口的按键
     row.add_child(Button::new("History").on_click(|_ctx,_data:& mut AppState, _env|{
-        let child_window  = WindowDesc::new(build_child_widget())
-        .title("SubWindow")
+        let child_window  = WindowDesc::new(build_weekly_widget())
+        .title("Weekly History")
         .window_size((400.0,300.0));
 
     _ctx.new_window(child_window);
@@ -128,6 +133,43 @@ pub fn build_ui() -> impl Widget<AppState> {
 }
 
 
-pub fn build_child_widget()-> impl Widget<AppState>{
-    Label:: new("This is a new window")
+// 如何展示每周的工作时间? 我可以想到的就是每行展示, 展示的格式如下:
+// 2025/02/21~2025/02/27, hh:mm:ss button
+pub fn build_weekly_widget()-> impl Widget<AppState>{
+    let mut col:Flex<AppState> = Flex::column();
+
+    col.add_child(Label:: new("Only archived records displayed."));
+
+    // 要多少个行呢? log文件夹中有多少个文件, 就有多少个行:
+    // 如何处理当前周? todo
+    for entry in WalkDir::new("log").into_iter().filter_map(|e| e.ok()){
+        
+        let path = entry.path();
+        let mut row:Flex<AppState> =Flex::row();
+        if path.is_file(){
+            // 返回值是lognode和一个总时间组成的元组
+            let filename_string:String = path.to_str().unwrap().to_string();
+            let res: (Vec<super::read::LogNode>, WorkTime) = weekly_read(&filename_string);
+            if res.0.len() == 0{
+                continue;
+            }
+            let s = iso_week_range(res.0[0].time.year, res.0[0].time.month, res.0[0].time.day).unwrap();
+            row.add_child(Label::new(format!("{}~{}: {:02}:{:02}:{:02}  ",s.0,s.1,res.1.hrs,res.1.minute,res.1.sec)));
+            // row.add_child(Button::new("Show").on_click(|_ctx,_data:&mut String,_env|{
+
+            // }));
+        }
+
+        col.add_child(row);
+    }
+
+
+
+
+    col
+
+}
+
+pub fn build_daily_widget()->impl Widget<AppState>{
+    Label::new("This is a new window for daily history")
 }
