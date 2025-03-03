@@ -6,12 +6,8 @@ use std::fs::{File, OpenOptions};
 use std::io::{self, Write, BufRead, BufReader};
 use std::str::FromStr;
 use std::num::ParseIntError;
-// use chrono::format::Item;
 use chrono::Weekday;
-// use druid::platform_menus::mac::file::print;
-// use druid::platform_menus::win::file::new;
-
-use crate::time::RealTime;
+use crate::modules::time::RealTime;
 
 
 // 初步设计日志条目格式为: YY-MM-DD hh:mm:ss action
