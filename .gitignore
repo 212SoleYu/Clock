@@ -1,5 +1,5 @@
 target/debug/*/
-
+target/release/*/
 *txt
 log/
 .vscode/

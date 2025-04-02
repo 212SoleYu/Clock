@@ -1,8 +1,8 @@
 // Date: 2025-02-18
 
 // use core::time;
-use std::{fmt::format, time::SystemTime};
-use chrono::{prelude::*, ParseWeekdayError};
+use std::time::SystemTime;
+use chrono::prelude::*;
 use druid::{Data, Lens};
 // use druid::platform_menus::mac::file::print;
 

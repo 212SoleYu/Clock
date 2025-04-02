@@ -191,7 +191,6 @@ pub fn right_button_click(app_state:&mut AppState)->Result<(),Error>{
     if current_state == false{
         return Ok(());
     }
-
     
     let mut current_real_time = RealTime::lazy_new();
     current_real_time.get_real_time();

@@ -10,10 +10,10 @@ mod modules;
 
 use crate::modules::app::*;
 use druid::{AppLauncher,WindowDesc,Color};
-use std::io;
 
 
-fn main() ->io::Result<()>{
+
+fn main() ->(){
 
     // 获取app初始状态
     let app_data: AppState = AppState::app_init();
@@ -34,7 +34,7 @@ fn main() ->io::Result<()>{
         .launch(app_data)
         .expect("Failed to launch application");
 
-    todo!();
+    ()
 
 }
 

@@ -1,11 +1,11 @@
 // use std::collections::btree_map::Entry;
 // use std::fs;
-use std::path::Path;
-use walkdir::{WalkDir, DirEntry};
+// use std::path::Path;
+use walkdir::WalkDir;
 use crate::modules::history::*;
 use crate::modules::time::*;
 use crate::modules::actions::*;
-use crate::modules::history::*;
+// use crate::modules::history::*;
 use druid::{ Data, Env, Lens, Widget, WidgetExt, WindowDesc, TimerToken, 
     EventCtx, Event, };
 use druid::widget::{Flex,Label,Button};
@@ -162,10 +162,6 @@ pub fn build_weekly_widget()-> impl Widget<AppState>{
 
         col.add_child(row);
     }
-
-
-
-
     col
 
 }
